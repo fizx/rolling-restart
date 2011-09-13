@@ -1,0 +1,27 @@
+#!/bin/sh
+
+if [ ! -n "$3" ]
+then
+  echo "Usage: `basename $0` proc-name delay-seconds host1 [host2 ... ]"
+  exit $E_BADARGS
+fi  
+
+PROC=$1
+shift
+DELAY=$1
+shift
+
+
+for HOST in "$@"
+do
+  echo "Restarting $HOST"
+  ssh $HOST "sudo monit restart $PROC"
+  sleep $DELAY
+  if ssh $HOST "sudo monit summary | fgrep \"'$PROC'\" | fgrep running"
+  then
+    echo "..."
+  else
+    echo "Not running on $HOST, aborting!"
+    exit 1
+  fi
+done
